@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { BadgeCheck, Heart, MessageCircle, Share2, Trash2 } from 'lucide-react'
 import moment from 'moment'
 import { dummyUserData } from '../assets/assets'
@@ -8,12 +8,16 @@ import { useAuth } from '@clerk/clerk-react'
 import api from '../api/axios'
 import toast from 'react-hot-toast'
 
-const PostCard = ({post}) => {
+const PostCard = ({post, onLikeToggle, onDelete}) => {
 
     const postWithHashtags = post.content.replace(/(#\w+)/g, '<span class="text-indigo-600">$1</span>')
-    const [likes, setLikes] = useState(post.likes_count)
+    const [likes, setLikes] = useState(post.likes_count || [])
     const currentUser = useSelector((state) => state.user.value)
     const [isDeleted, setIsDeleted] = useState(false)
+
+    useEffect(() => {
+        setLikes(post.likes_count || [])
+    }, [post.likes_count])
 
     const { getToken } = useAuth()
 
@@ -26,6 +30,7 @@ const PostCard = ({post}) => {
             if (data.success){
                toast.success(data.message) 
                setIsDeleted(true)
+               if(onDelete) onDelete(post._id);
             }else{
                 toast.error(data.message)
             }
@@ -35,11 +40,17 @@ const PostCard = ({post}) => {
     }
 
     const handleLike = async () => {
+        if (!currentUser?._id) {
+            toast.error("Please log in to like posts")
+            return
+        }
+
         try {
             const { data } = await api.post(`/api/post/like`, {postId: post._id}, {headers: { Authorization: `Bearer ${await getToken()}` }})
 
             if (data.success){
                toast.success(data.message) 
+               const willBeLiked = !likes.includes(currentUser._id)
                setLikes(prev =>{
                 if(prev.includes(currentUser._id)){
                     return prev.filter(id=> id !== currentUser._id)
@@ -47,6 +58,7 @@ const PostCard = ({post}) => {
                     return [...prev, currentUser._id]
                 }
                })
+               if(onLikeToggle) onLikeToggle(post._id, willBeLiked);
             }else{
                 toast(data.message)
             }
@@ -90,7 +102,7 @@ const PostCard = ({post}) => {
         {/* Actions */}
         <div className='flex items-center gap-4 text-gray-600 text-sm pt-2 border-t border-gray-300'>
             <div className='flex items-center gap-1'>
-                <Heart className={`w-4 h-4 cursor-pointer ${likes.includes(currentUser._id) && 'text-red-500 fill-red-500'}`} onClick={handleLike}/>
+                <Heart className={`w-4 h-4 cursor-pointer ${currentUser?._id && likes.includes(currentUser._id) ? 'text-red-500 fill-red-500' : ''}`} onClick={handleLike}/>
                 <span>{likes.length}</span>
             </div>
             <div className='flex items-center gap-1'>

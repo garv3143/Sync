@@ -1,5 +1,7 @@
 # Sync — A Modern Full-Stack Social Networking Platform
 
+🔗 **Live Demo:** [https://sync-1-y8d5.onrender.com](https://sync-1-y8d5.onrender.com)
+
 **Sync** is a premium, developer-focused, full-stack social networking platform designed to bring people together. Developed as a modern MERN-stack application, Sync facilitates real-time user interaction, connection request management, daily email reminders, image uploads, and post sharing.
 
 ---
